@@ -15,11 +15,11 @@ Shader "Custom/testHatchingShader"
         _OutlineMask ("Outline Mask Texture", 2D) = "black" { }
         _OutlineColor ("Outline Color", Color) = (0, 0, 0, 1)
         _OutlineWidth ("Outline Width", Float) = 0
-        [Enum(OFF, 0, ON, 1)] _Hoge2 ("Toggle Billboard", int) = 0
+
 
 
         _Threshold ("Threshold", Range(0.0, 1.0)) = 0.5
-
+        _BlendFactor("Blend Factor", Range(1.0, 10.0)) = 10.0
         _Density ("Density", Range(0.0, 1.0)) = 0.6
         _Roughness ("Roughness", Range(0.1, 30)) = 8.0
         [Enum(OFF, 0, ON, 1)] _Hoge ("Toggle Gray Scale", int) = 0
@@ -93,7 +93,7 @@ Shader "Custom/testHatchingShader"
             uniform sampler2D _MainTex; uniform float4 _MainTex_ST;
             uniform sampler2D _OutlineMask; uniform float4 _OutlineMask_ST;
             uniform int _Hoge;
-            uniform int _Hoge2;
+
             uniform fixed4 _OutlineColor;
 
             uniform float _OutlineWidth;
@@ -108,29 +108,30 @@ Shader "Custom/testHatchingShader"
                 v.vertex.xyz += lerp(0, v.normal * (1.0 - outlineMask.rgb) * _OutlineWidth, saturate(_OutlineWidth * 1000));
 
                 float4 pos = mul(UNITY_MATRIX_P, mul(UNITY_MATRIX_MV, float4(0, 0, 0, 1)) + float4(v.vertex.x, v.vertex.y, v.vertex.z, 0));
-                o.vertex = lerp(UnityObjectToClipPos(v.vertex), pos, _Hoge2);
+                o.vertex = UnityObjectToClipPos(v.vertex);
                 o.normal = UnityObjectToWorldNormal(v.normal);
                 o.wpos = mul(unity_ObjectToWorld, v.vertex);
-                UNITY_TRANSFER_FOG(o, o.vertex);
+                // UNITY_TRANSFER_FOG(o, o.vertex);
                 return o;
             }
             
             fixed4 frag(v2f i): SV_Target
             {
-                float3 N = i.normal;
-                float3 V = normalize(centerCameraPos.xyz - i.wpos.xyz);
+                    // float3 N = i.normal;
+                    // float3 V = normalize(centerCameraPos.xyz - i.wpos.xyz);
 
-                float NdotV = max(0, dot(N, V));
-                float NNdotV = 1.001 - dot(N, V);
+                    // float NdotV = max(0, dot(N, V));
+                    // float NNdotV = 1.001 - dot(N, V);
 
 
 
             
-                fixed4 col = _OutlineColor;
-                col.rgb = lerp(col.rgb, dot(col.rgb, half3(0.2326, 0.7152, 0.0722)), _Hoge);
+                    fixed4 col = _OutlineColor;
+                    col.rgb = lerp(col.rgb, dot(col.rgb, half3(0.2326, 0.7152, 0.0722)), _Hoge);
+                    // col.rgb = float3(1,0,0);
 
 
-                UNITY_APPLY_FOG(i.fogCoord, col);
+                    // UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;
             }
             ENDCG
@@ -183,10 +184,11 @@ Shader "Custom/testHatchingShader"
 
             uniform float _Threshold;
             
+            uniform float _BlendFactor;
             uniform float _Density;
             uniform float _Roughness;
             uniform int _Hoge;
-            uniform int _Hoge2;
+
 
 
             void ComputeVertexLightColor(inout v2f i)
@@ -208,7 +210,7 @@ Shader "Custom/testHatchingShader"
                 o.wpos = mul(unity_ObjectToWorld, v.vertex);
 
                 float4 pos = mul(UNITY_MATRIX_P, mul(UNITY_MATRIX_MV, float4(0, 0, 0, 1)) + float4(v.vertex.x, v.vertex.y, v.vertex.z, 0));
-                o.vertex = lerp(UnityObjectToClipPos(v.vertex), pos, _Hoge2);
+                o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.huv = TRANSFORM_TEX(v.uv, _MainTex) * _Roughness;
                 o.normal = UnityObjectToWorldNormal(v.normal);
@@ -264,7 +266,7 @@ Shader "Custom/testHatchingShader"
                 fixed4 hatch4 = tex2D(_Hatch4, i.huv);
                 fixed4 hatch5 = tex2D(_Hatch5, i.huv);
                 fixed4 hatch6 = float4(0, 0, 0, 1);
-                float blendFactor = 10;
+                float blendFactor = _BlendFactor;
 
                 if (length(lightCol.rgb) < _Threshold)
                 {
